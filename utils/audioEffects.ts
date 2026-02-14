@@ -1,6 +1,9 @@
 const audioContext = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
 
-export const playTickSound = () => {
+const rattleTones = [180, 150, 200];
+let currentToneIndex = 0;
+
+export const playRattleSound = () => {
   if (!audioContext) return;
 
   const oscillator = audioContext.createOscillator();
@@ -9,14 +12,16 @@ export const playTickSound = () => {
   oscillator.connect(gainNode);
   gainNode.connect(audioContext.destination);
 
-  oscillator.frequency.value = 800;
-  oscillator.type = 'sine';
+  oscillator.frequency.value = rattleTones[currentToneIndex];
+  oscillator.type = 'triangle';
 
-  gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+  gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.06);
 
   oscillator.start(audioContext.currentTime);
-  oscillator.stop(audioContext.currentTime + 0.05);
+  oscillator.stop(audioContext.currentTime + 0.06);
+
+  currentToneIndex = (currentToneIndex + 1) % rattleTones.length;
 };
 
 export const playWinSound = () => {
@@ -63,35 +68,3 @@ export const playButtonClick = () => {
   oscillator.stop(audioContext.currentTime + 0.1);
 };
 
-export class SpinningTicker {
-  private intervalId: number | null = null;
-  private audioContext: AudioContext | null;
-
-  constructor() {
-    this.audioContext = typeof window !== 'undefined' ? new (window.AudioContext || (window as any).webkitAudioContext)() : null;
-  }
-
-  start() {
-    if (!this.audioContext) return;
-
-    let tickSpeed = 100;
-    const minSpeed = 20;
-    const speedDecrease = 0.98;
-
-    this.intervalId = window.setInterval(() => {
-      playTickSound();
-
-      tickSpeed *= speedDecrease;
-      if (tickSpeed < minSpeed) {
-        tickSpeed = minSpeed;
-      }
-    }, tickSpeed);
-  }
-
-  stop() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-  }
-}

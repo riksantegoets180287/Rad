@@ -4,7 +4,7 @@ import Wheel from './components/Wheel';
 import AdminPanel from './components/AdminPanel';
 import { INITIAL_TOPICS, SPIN_DURATION } from './constants';
 import confetti from 'https://cdn.skypack.dev/canvas-confetti';
-import { playTickSound, playWinSound, playButtonClick } from './utils/audioEffects';
+import { playRattleSound, playWinSound, playButtonClick } from './utils/audioEffects';
 
 const App: React.FC = () => {
   const [topics, setTopics] = useState<string[]>(() => {
@@ -61,7 +61,7 @@ const App: React.FC = () => {
     const speedIncrease = 1.015;
 
     tickIntervalRef.current = window.setInterval(() => {
-      playTickSound();
+      playRattleSound();
       tickSpeed *= speedIncrease;
       if (tickSpeed > minSpeed) {
         tickSpeed = minSpeed;
