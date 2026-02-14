@@ -4,6 +4,7 @@ import Wheel from './components/Wheel';
 import AdminPanel from './components/AdminPanel';
 import { INITIAL_TOPICS, SPIN_DURATION } from './constants';
 import confetti from 'https://cdn.skypack.dev/canvas-confetti';
+import { playTickSound, playWinSound, playButtonClick } from './utils/audioEffects';
 
 const App: React.FC = () => {
   const [topics, setTopics] = useState<string[]>(() => {
@@ -15,27 +16,12 @@ const App: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  
-  // Audio Refs
-  const spinAudio = useRef<HTMLAudioElement | null>(null);
-  const winAudio = useRef<HTMLAudioElement | null>(null);
+
+  const tickIntervalRef = useRef<number | null>(null);
 
   // Secret sequence state
   const keySequence = useRef<number[]>([]);
   const lastKeyTime = useRef<number>(0);
-
-  useEffect(() => {
-    // Ticking sound for spinning
-    spinAudio.current = new Audio('https://www.soundjay.com/buttons/button-20.mp3'); 
-    spinAudio.current.loop = true;
-    
-    // Happy/Tada sound for winning
-    winAudio.current = new Audio('https://www.soundjay.com/misc/sounds/tada-fanfare-02.mp3');
-    
-    // Pre-load sounds
-    spinAudio.current.load();
-    winAudio.current.load();
-  }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const now = Date.now();
@@ -63,47 +49,52 @@ const App: React.FC = () => {
 
   const spinWheel = () => {
     if (isSpinning) return;
-    
+
+    playButtonClick();
+
     setSelectedTopic(null);
     setShowResult(false);
     setIsSpinning(true);
 
-    // Ensure audio plays
-    if (spinAudio.current) {
-      spinAudio.current.currentTime = 0;
-      spinAudio.current.play().catch(e => console.error("Audio error:", e));
-    }
+    let tickSpeed = 50;
+    const minSpeed = 150;
+    const speedIncrease = 1.015;
+
+    tickIntervalRef.current = window.setInterval(() => {
+      playTickSound();
+      tickSpeed *= speedIncrease;
+      if (tickSpeed > minSpeed) {
+        tickSpeed = minSpeed;
+      }
+    }, tickSpeed);
 
     const numTopics = topics.length;
     const segmentSize = 360 / numTopics;
-    
-    // Pick winner index
+
     const winnerIndex = Math.floor(Math.random() * numTopics);
     const winnerTopic = topics[winnerIndex];
 
-    // Calculate rotation
-    const extraSpins = 10 * 360; 
+    const extraSpins = 10 * 360;
     const currentRotationBase = Math.ceil(rotation / 360) * 360;
-    
-    // Indicator is at 270 degrees. Put the middle of the segment at the indicator.
+
     const targetBaseRotation = 270 - (winnerIndex + 0.5) * segmentSize;
     const finalRotation = currentRotationBase + extraSpins + targetBaseRotation;
-    
+
     setRotation(finalRotation);
 
     setTimeout(() => {
       setIsSpinning(false);
-      if (spinAudio.current) {
-        spinAudio.current.pause();
+
+      if (tickIntervalRef.current) {
+        clearInterval(tickIntervalRef.current);
+        tickIntervalRef.current = null;
       }
-      if (winAudio.current) {
-        winAudio.current.currentTime = 0;
-        winAudio.current.play().catch(e => console.error("Win audio error:", e));
-      }
-      
+
+      playWinSound();
+
       setSelectedTopic(winnerTopic);
       setShowResult(true);
-      
+
       confetti({
         particleCount: 200,
         spread: 120,
@@ -155,7 +146,10 @@ const App: React.FC = () => {
             </div>
             
             <button
-              onClick={() => setShowResult(false)}
+              onClick={() => {
+                playButtonClick();
+                setShowResult(false);
+              }}
               className="w-full py-6 bg-summaIndigo text-white font-black rounded-[2rem] hover:bg-indigo-900 transition-all text-3xl shadow-2xl shadow-summaIndigo/40"
             >
               Nog een keer!

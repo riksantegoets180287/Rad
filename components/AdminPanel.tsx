@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ADMIN_PASSWORD } from '../constants';
+import { playButtonClick } from '../utils/audioEffects';
 
 interface AdminPanelProps {
   topics: string[];
@@ -29,12 +30,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ topics, setTopics, onClose }) =
       .split('\n')
       .map(t => t.trim())
       .filter(t => t.length > 0);
-    
+
     if (newTopics.length < 2) {
       setError('Voer minimaal 2 onderwerpen in.');
       return;
     }
-    
+
+    playButtonClick();
     setTopics(newTopics);
     localStorage.setItem('summa_topics', JSON.stringify(newTopics));
     onClose();
@@ -61,13 +63,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ topics, setTopics, onClose }) =
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => {
+                  playButtonClick();
+                  onClose();
+                }}
                 className="flex-1 bg-summaGray text-summaIndigo font-bold py-3 rounded-xl hover:bg-gray-200 transition-all"
               >
                 Annuleren
               </button>
               <button
                 type="submit"
+                onClick={() => playButtonClick()}
                 className="flex-1 bg-summaIndigo text-white font-bold py-3 rounded-xl hover:opacity-90 transition-all"
               >
                 Inloggen
@@ -96,7 +102,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ topics, setTopics, onClose }) =
 
         <div className="flex gap-3">
           <button
-            onClick={onClose}
+            onClick={() => {
+              playButtonClick();
+              onClose();
+            }}
             className="px-6 py-3 bg-summaGray text-summaIndigo font-bold rounded-xl hover:bg-gray-200 transition-all"
           >
             Sluiten
